@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<Configuration status="WARN">
+  <Appenders>
+    <!-- Async Loggers will auto-flush in batches, so switch off immediateFlush. -->
+    <RandomAccessFile name="Errors" fileName="log/validationErrors.log" immediateFlush="false" append="true">
+      <PatternLayout>
+        <Pattern>%d :: %m %ex%n</Pattern>
+      </PatternLayout>
+    </RandomAccessFile>
+    
+    <RandomAccessFile name="General" fileName="log/generalLog.log" immediateFlush="false" append="false">
+      <PatternLayout>
+        <Pattern>%d :: %m %ex%n</Pattern>
+      </PatternLayout>
+    </RandomAccessFile>
+    
+    <RandomAccessFile name="CsvErrorFilenamesNoPaths" fileName="log/validationErrors.csv" immediateFlush="false" append="true">
+      <PatternLayout>
+        <Pattern>%m</Pattern>
+      </PatternLayout>
+    </RandomAccessFile>
+    
+    <RandomAccessFile name="ErrorFilenamesWithPaths" fileName="log/validationErrorsFilesnames.log" immediateFlush="false" append="true">
+      <PatternLayout>
+        <Pattern>%m</Pattern>
+      </PatternLayout>
+    </RandomAccessFile>
+    
+    <Console name="STDOUT" target="SYSTEM_OUT" ignoreExceptions="false">
+      <PatternLayout pattern="%m%n"/>
+    </Console>
+  </Appenders>
+  
+  <Loggers>
+    <!-- pattern layout actually uses location, so we need to include it -->
+    <AsyncLogger name="org.cameraandlensreviews.error" level="warn" includeLocation="true">
+      <AppenderRef ref="Errors"/>
+    </AsyncLogger>
+    
+    <AsyncLogger name="org.cameraandlensreviews.general" level="warn" includeLocation="true">
+      <AppenderRef ref="General"/>
+    </AsyncLogger>
+    
+    <AsyncLogger name="org.cameraandlensreviews.csvErrorFilenames" level="warn" includeLocation="true">
+      <AppenderRef ref="CsvErrorFilenamesNoPaths"/>
+    </AsyncLogger>
+    
+    <AsyncLogger name="org.cameraandlensreviews.errorFilenamesWithPaths" level="warn" includeLocation="true">
+      <AppenderRef ref="ErrorFilenamesWithPaths"/>
+    </AsyncLogger>
+    
+    <Root level="info" includeLocation="true">
+      <!-- <AppenderRef ref="STDOUT" level="ERROR" /> -->
+    </Root>
+  </Loggers>
+</Configuration>

@@ -1,0 +1,95 @@
+<project name="AdobeDNGValidatorUI" basedir="." default="jar">
+
+	<property name="project.name"     value="AdobeDNGValidatorUI"/>
+	<property name="project.version"     value="0.1beta"/>
+
+    <property name="src.dir"     value="src"/>
+    <property name="build.dir"   value="build"/>
+	<property name="config.dir"   value="config"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+	<property name="package.dir"     value="${build.dir}/package"/>
+	<property name="dist.dir"     value="dist"/>
+	
+	<path id="build.classpath">
+		<fileset dir="${basedir}">
+			<include name="lib/*.jar"/>
+			<include name="config/**"/>
+		</fileset>
+	</path>
+	
+	<pathconvert property="manifest.classpath" pathsep=" ">
+		<path refid="build.classpath"/>
+		<mapper>
+			<chainedmapper>
+				<flattenmapper/>
+				<globmapper from="*.jar" to="lib/*.jar"/>
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+
+    <property name="main-class"  value="org.cameraandlensreviews.AdobeDNGValidatorUIMain"/>
+
+	<property name="lib.dir"     value="lib"/>
+	<path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+	
+	<!-- set up some directories used by this project -->
+	<target name="init" description="setup project directories">
+		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${classes.dir}"/>
+	</target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}-${project.version}.jar" basedir="${classes.dir}">
+			<fileset dir="config/"/>
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+				<attribute name="Class-Path" value="${manifest.classpath}"/>
+            </manifest>
+        </jar>
+    </target>
+	
+	<target name="package" depends="jar" description="Build the distributable JAR for myproject">
+		<copy todir="${package.dir}/lib" >  
+			<fileset dir="lib"/>  
+		</copy>
+		<copy todir="${package.dir}" >  
+			<fileset dir="${jar.dir}"/>  
+		</copy>
+		<copy todir="${package.dir}" >  
+			<fileset file="config.properties"/>  
+		</copy>
+		<copy todir="${package.dir}/licenses" >  
+			<fileset dir="licenses"/>  
+		</copy>
+		
+		<zip destfile="${basedir}/dist/${project.name}-${project.version}.zip">
+			<fileset dir="${package.dir}"/>
+		</zip>
+	</target>
+
+    <target name="run" depends="jar">
+        <java fork="true" classname="${main-class}">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${jar.dir}/${ant.project.name}.jar"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="clean-build" depends="clean,jar"/>
+
+    <target name="main" depends="clean,run"/>
+
+</project>
