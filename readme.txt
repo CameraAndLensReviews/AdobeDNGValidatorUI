@@ -8,7 +8,9 @@ integrity of DNG files under a root directory. It has a variety of outputs:
  - A longer list of filesnames with paths that failed validation (validationErrorsFilesnames.log)
  - The failed files  can optionally be copied to a directory of your choice
 
-The software is an early beta and will have bugs. It was tested only on windows systems. Bugs can be reported to dng@cameraandlensreviews.org or perhaps via the GitHub project.
+The software is an early beta and will have bugs. It was tested only on windows systems. Bugs should be reported via the GitHub project
+
+https://github.com/CameraAndLensReviews/AdobeDNGValidatorUI/
 
 Installation
 ------------

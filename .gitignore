@@ -1,0 +1,5 @@
+*.class
+build/*
+log/*
+bin/*
+dng_validate.exe
