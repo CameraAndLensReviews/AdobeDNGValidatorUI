@@ -1,7 +1,7 @@
 <project name="AdobeDNGValidatorUI" basedir="." default="jar">
 
 	<property name="project.name"     value="AdobeDNGValidatorUI"/>
-	<property name="project.version"     value="0.1beta"/>
+	<property name="project.version"     value="0.2beta"/>
 
     <property name="src.dir"     value="src"/>
     <property name="build.dir"   value="build"/>

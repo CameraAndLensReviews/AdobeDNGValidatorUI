@@ -12,17 +12,20 @@ The software is an early beta and will have bugs. It was tested only on windows 
 
 https://github.com/CameraAndLensReviews/AdobeDNGValidatorUI/
 
-Installation
-------------
+Installation and Use
+--------------------
 1. Unzip this tool into a directory of your choice. Log files will be created in the log subdirectory of where you run it from.
 2. Download Java 7 or higher (http://java.com/en/download/index.jsp)
 3. Put the Java executable onto your path 
    Add the directory where your java.exe file is to (Control Panel\All Control Panel Items\System\Advanced System Settings\Environment Variables\System Variables -> PATH)
 4. Download the Adobe DNG SDK (see below) and put the executable file into the same directory as this tool.
-5. Edit the config.properties file to tell it where 
+5. Edit the config.properties file to tell it where the input directory is, and optionally where to copy invalid files to.
+   OR
+   specify the input directory and directory for invalid files on the command line.
 6. Run with a command like this (this will change as the version number goes up)
 
-java -jar AdobeDNGValidatorUI-0.1beta.jar
+java -jar AdobeDNGValidatorUI-0.2beta.jar
+java -jar AdobeDNGValidatorUI-0.2beta.jar c:\\temp\\input_files c:\\temp\\output_files
 
 Adobe DNG SDK
 -------------

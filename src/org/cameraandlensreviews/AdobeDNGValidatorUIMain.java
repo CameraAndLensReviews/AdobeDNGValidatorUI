@@ -4,13 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DecimalFormat;
-import java.util.AbstractQueue;
-import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import org.cameraandlensreviews.workerThreads.WorkerThread;
 
 /**
  * A quick and dirty way to get the Adobe DNG validator to look at multiple files.
@@ -20,102 +14,98 @@ import org.cameraandlensreviews.workerThreads.WorkerThread;
  * Released under GPL 3.0 http://www.gnu.org/licenses/gpl.txt
  */
 public class AdobeDNGValidatorUIMain {
-	private static int threads = -1;
-	
 	private LocalLogManager logManager = new LocalLogManager(); 
-	private Configuration config = new Configuration();
+	//private Configuration config = new Configuration();
 
 	public static void main(String[] args) {
+		System.out.println("Starting Adobe DNG Validator UI");
+		
 		AdobeDNGValidatorUIMain m = new AdobeDNGValidatorUIMain();
-		m.start(args);
+		Configuration config = m.start(args);
+		
+		if (config != null) {
+			AdobeDNGValidatorWorkflow w = new AdobeDNGValidatorWorkflow();
+			w.coreWorkflow(config);
+		} else {
+			System.out.println("\n\nUsage: AdobeDNGValidatorUIMain [inputDir] [dir for faulty files]");
+			System.out.println("On windows double escape backslashes: c:\\\\temp\\\\directoryName");
+		}
+		
+		System.out.println("\n\nEnding Adobe DNG Validator UI");
 	}
 
 	
-	public void start(String[] args) {
+	public Configuration start(String[] args) {
 		try {
-			System.out.println("Starting Adobe DNG Validator UI");
-			
 			// Load and validate properties
 			System.out.println(" -- Loading and validating configuration");
-			loadAndValidateProperties(args);
+			Configuration config = loadAndValidateProperties();
+			
 			if (config.inputDir == null || config.inputDir.trim().length() == 0) {
-				return;
-			}
-			System.out.println(" -- Configuration loaded and validated");
-			
-			// Build a list of files to validate
-			System.out.println(" -- Finding files to process");
-			AbstractQueue<String> queue = new ArrayBlockingQueue<String>(100000);
-			findDNGFiles(queue, config.inputDir);
-			
-			int qs = queue.size();
-			System.out.println("\n -- Files loaded. " + qs + " files found");
-			
-			if (qs == 0) {
-				return;
+				System.out.println(" -- No configuration found, using defaults and command line parameters");
+			} else {
+				System.out.println(" -- Configuration loaded and validated");
 			}
 			
-			// Keep track of the threads
-			ArrayList<Thread> activeThreads = new ArrayList<Thread>(threads);
+			// Load command line arguments
+			loadCommandLineArgs(args, config);
 			
-			// Start threads to do the work
-			System.out.println(" -- Starting processing threads " + config.inputDir);
-			logManager.logValidationError("\nStarting processing " + config.inputDir);
-			for (int i = 0; i < threads; i++) {
-				WorkerThread wt = new WorkerThread("Thread" + i, logManager, queue, config);
-				
-				Thread t = new Thread(wt);
-				activeThreads.add(t);
-				t.start();
+			// Make sure we have at least an input dir
+			if (config.inputDir == null) {
+				return null;
 			}
-			System.out.println(" -- Processing threads started. This could take some time...");
-			
-			System.out.println("\nInitial queue size is " + qs);
-			
-			// Wait until all threads have finished
-			long startTime = System.currentTimeMillis();
-			for (Thread thread : activeThreads ) {
-				thread.join();
+			if (config.faultyFileCopyDir == null || config.faultyFileCopyDir.trim().length() == 0) {
+				System.out.println("No output directory has been configured or specified, faulty files will not be copied");
 			}
-			
-			System.out.println(" -- finished processing");
-			logManager.logValidationError("\nFinished processing");
-			
-			long endTime = System.currentTimeMillis();
-			
-			long ms = (endTime - startTime);
-			long sec = ms / 1000;
-			float rate = qs / sec;
-			
-			DecimalFormat df = new DecimalFormat();
-			df.setMaximumFractionDigits(1);
-			String rateStr = df.format(rate);
-			
-			int errors = WorkerThread.getValidationErrors();
-			int warnings = WorkerThread.getValidationWarnings();
-			
-			String message = "Verified " + qs + " file(s) in " + sec + " seconds, " + rateStr + " files per second.\n" + errors + " file(s) failed validation, " + warnings + " file(s) couldn't be validated due to Adobe DNG library limitations"; 
-			System.out.println(message);
-			logManager.logGeneral(message);
-			logManager.logValidationError(message);
-			
+		
+			return config;
 		} catch (Exception e) {
 			logManager.logGeneral(e.getMessage());
 			logManager.logGeneral("Program exiting");
 			
 			System.err.println(e.getMessage());
 			System.err.println("Program exiting");
-		} finally {
-			System.out.println("\n\nEnding Adobe DNG Validator UI");
-		}
+		} 
+		
+		return null;
 	}
 	
-	public void loadAndValidateProperties(String[] args) throws Exception {
+	/**
+	 * Load the command line arguments
+	 * 
+	 * @param args
+	 * @param config
+	 */
+	private void loadCommandLineArgs(String[] args, Configuration config) {
+		if (args == null || args.length == 0) {
+			return;
+		}
+		
+		// Load the input directory
+		if (args.length >= 1 && args[0].trim().length() > 0) {
+			File testFile = new File(args[0]);
+			if (testFile.exists() && testFile.isDirectory()) {
+				config.inputDir = args[0];
+			}
+		}
+		
+		// Load the output directory
+		if (args.length >= 2 && args[1].trim().length() > 0) {
+			File testFile = new File(args[1]);
+			if (testFile.exists() && testFile.isDirectory()) {
+				config.faultyFileCopyDir = args[1];
+			}
+		}
+	}
+
+
+	public Configuration loadAndValidateProperties() throws Exception {
+		Configuration config = new Configuration();
+		
 		// Check the config file exists
 		File f = new File("config.properties");
 		if (!f.exists()) {
-			System.out.println("The config file 'config.properties' does not exist. Please retrieve this file from the distribution.");
-			return;
+			System.out.println("The config file 'config.properties' does not exist. Please retrieve this file from the distribution if possible.");
 		}
 		
 		// Load and validated properties
@@ -145,8 +135,8 @@ public class AdobeDNGValidatorUIMain {
 				config.exportFailures = false;
 			}
 			
-			threads = Integer.parseInt(prop.getProperty("threads"));
-			if (threads < 1 || threads > 32) {
+			config.threads = Integer.parseInt(prop.getProperty("threads"));
+			if (config.threads < 1 || config.threads > 32) {
 				throw new NumberFormatException();
 			}
 		} catch (NumberFormatException e) {
@@ -165,9 +155,10 @@ public class AdobeDNGValidatorUIMain {
 		
 		File inputDirF = new File(config.inputDir);
 		if (!inputDirF.exists()) {
-			throw new IOException("Input directory not found. Did you escape backslashes? eg c:\\temp\\directory");
+			//throw new IOException("Input directory not found. Did you escape backslashes? eg c:\\\\temp\\\\directory");
+			System.out.println("No input directory found in configuration file. Command line still to be checked.");
 		}
-		if (!inputDirF.isDirectory()) {
+		if (inputDirF.exists() && !inputDirF.isDirectory()) {
 			throw new IOException("Input directory is not a directory");
 		}
 		
@@ -188,27 +179,7 @@ public class AdobeDNGValidatorUIMain {
 		}
 		
 		logManager.logGeneral("Configuration file loaded succesfully");
+		
+		return config;
 	}
-	
-	private void findDNGFiles(AbstractQueue<String> queue, String path) {
-		System.out.print(".");
-		File root = new File( path );
-        File[] list = root.listFiles();
-
-        if (list == null) return;
-
-        for (File f : list) {
-            if (f.isDirectory()) {
-            	findDNGFiles(queue, f.getAbsolutePath());
-            }
-            else {
-            	if (f.getAbsolutePath().toString().endsWith("dng")) {
-            		queue.add(f.getAbsolutePath().toString());
-            	}
-            }
-        }
-	}
-	
-	
-
 }
